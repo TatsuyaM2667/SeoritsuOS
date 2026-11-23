@@ -450,6 +450,8 @@ if [ -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/seoritsu.desktop" ] &
         xdg-mime default seoritsu.desktop text/plain text/markdown text/x-csrc text/x-chdr text/x-shellscript application/json && info "文字のファイルを開くアプリ: seoritsu"
     else info "文字のファイルを開くアプリ: $cur(そのまま)"; fi
 fi
+# Firefox 系のブラウザ(Zen など)がメモリを溜め込まないように(user.js。ame-browser-tune --undo で外せる)
+sh "$REPO/session/ame-browser-tune" | sed 's/^/    ブラウザ: /'
 
 # ---------------------------------------------------------------------------
 say "7/7 端末のシェル(zsh)"

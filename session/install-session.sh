@@ -244,6 +244,7 @@ install_file "$HERE/ame-update" "$PREFIX/bin/ame-update" 755
 install_file "$HERE/ame-term-shell" "$PREFIX/bin/ame-term-shell" 755
 install_file "$HERE/ame-greeter" "$PREFIX/bin/ame-greeter" 755
 install_file "$HERE/ame-terminal" "$PREFIX/bin/ame-terminal" 755
+install_file "$HERE/ame-browser-tune" "$PREFIX/bin/ame-browser-tune" 755
 # ファイルアプリ(Thunar)を端末と同じ半透明のテーマで開く入口と、そのテーマ(AmeGlass)
 install_file "$HERE/libexec/thunar" "$PREFIX/libexec/ame-shell/thunar" 755
 install_file "$OUT/share/ame-shell/themes/AmeGlass/gtk-3.0/gtk.css" "$PREFIX/share/themes/AmeGlass/gtk-3.0/gtk.css" 644

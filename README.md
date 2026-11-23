@@ -182,6 +182,11 @@ NixOS(`/etc/nixos/flake.nix`):
   - ghostty の設定: 自分の `~/.config/ghostty/config` が無ければ ame-shell のもの(`data/ghostty/config`: 夜空の紺に半透明、JetBrainsMono Nerd Font、ame の 16 色、タイトルバーなし、2 つ目からの窓はすぐ開く)
   - 端末の中のシェルは zsh(ログインシェルは変えません)。自分の `~/.zshrc` が無ければ ame-shell の設定(`data/zsh/.zshrc`): 2 行のプロンプト(場所・git のブランチと状態・かかった時間・終了コード・時刻)、矢印で選べる補完、↑↓ で入力中の文字から始まる履歴、灰色の候補(zsh-autosuggestions)、色分け(zsh-syntax-highlighting)、fzf(Ctrl+R)・zoxide(`z`)・eza(アイコン付きの `ls`)。足したい設定は `~/.config/ame-shell/zshrc.local` に
   - 開くと最初に `fastfetch` を表示します(`AME_FASTFETCH=0` で無効)
+- **ブラウザのメモリ**(`ame-browser-tune`): Firefox 系(Zen・Firefox・LibreWolf・Floorp。Flatpak 版も)のプロファイルの `user.js` に、メモリを溜め込まないための設定を入れます。インストーラと `ame-update` が入れ、ブラウザを開き直すと効きます。
+  - 入れる設定は、表示中のタブの速さを落とさないものだけです。
+    - 裏のタブは、空きメモリが 20% を切ったとき(Zen なら、30 分使わないときも)外します。戻ると読み直します。
+    - デコードした画像の置き場(既定はメモリの 1/4 まで)は 512MB まで、戻る用に取っておくページは 2 つまで、メモリのキャッシュは 128MB までにします。
+  - `ame-browser-tune --check` で入っているかを見られ、`--undo` で入れたまとまりだけを外せます(自分の `user.js` の行には触りません)。
   FreeBSD では、インストーラと ame-update が `~/.config/foot/foot.ini` と `~/.config/fastfetch/config.jsonc`(いつもの大きいロゴ)をこの設定で上書きします(元のファイルは `*.ame-bak`)。
 - **日本語入力(fcitx5 + Mozc)**: Chimera には Mozc のパッケージが無く、FreeBSD も quarterly に無いことがあるので、`sh install.sh --mozc` でソースからビルドして入れます(10〜20 分。`scripts/build-mozc.sh`)。Arch は pacman で入ります
 - カーソルは未設定なら 24px(Adwaita)。

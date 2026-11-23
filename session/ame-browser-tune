@@ -1,0 +1,98 @@
+#!/bin/sh
+# ame-browser-tune: Firefox 系のブラウザ(Zen・Firefox・LibreWolf・Floorp。Flatpak 版も)が、メモリを溜め込まないようにする。POSIX sh。
+#
+#   ame-browser-tune           見つかったプロファイルすべての user.js に、SeoritsuOS の設定のまとまりを入れる(入れ直し)
+#   ame-browser-tune --check   入っているかを見るだけ
+#   ame-browser-tune --undo    入れたまとまりだけを外す(ほかの user.js の行には触らない)
+#
+# 表示中のタブの速さは落とさない設定だけ: 裏のタブは、メモリが足りなくなったとき・しばらく使わないときに外す
+# (戻ると読み直す)。デコードした画像・戻る用のページ・メモリのキャッシュに上限を付ける。
+# ブラウザを開き直すと効く(user.js は起動のときに読まれる)。設定画面で変えた値より、こちらが優先される。
+set -u
+BEGIN='// >>> SeoritsuOS ame-browser-tune(ame-browser-tune --undo で外せる)'
+END='// <<< SeoritsuOS ame-browser-tune'
+
+MODE=apply
+case "${1:-}" in
+    --check) MODE=check ;;
+    --undo) MODE=undo ;;
+    ""|--apply) ;;
+    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    *) echo "不明なオプション: $1" >&2; exit 2 ;;
+esac
+
+block() {
+    cat <<EOF
+$BEGIN
+// 裏のタブは、空きメモリが 20% を切ったら外す(表示中のタブは外さない。戻ると読み直す)
+user_pref("browser.tabs.unloadOnLowMemory", true);
+user_pref("browser.low_commit_space_threshold_percent", 20);
+// Zen: 30 分使っていないタブを外す(ほかのブラウザでは何もしない)
+user_pref("zen.tab-unloader.enabled", true);
+user_pref("zen.tab-unloader.timeout-minutes", 30);
+// デコードした画像の置き場の上限(既定はメモリの 1/4 まで。共有メモリに積もりやすい)を 512MB に
+user_pref("image.mem.surfacecache.max_size_kb", 524288);
+// 戻る・進むのためにまるごと取っておくページの数(既定は最大 8)を 2 に
+user_pref("browser.sessionhistory.max_total_viewers", 2);
+// メモリ上のキャッシュの上限(既定はメモリの量で自動)を 128MB に。ディスクのキャッシュはそのまま
+user_pref("browser.cache.memory.capacity", 131072);
+// 閉じたタブの記録(元に戻す用)を 25 から 10 に
+user_pref("browser.sessionstore.max_tabs_undo", 10);
+$END
+EOF
+}
+
+# プロファイルの置き場(ネイティブ版と Flatpak 版)
+ROOTS="$HOME/.zen $HOME/.var/app/app.zen_browser.zen/.zen
+$HOME/.mozilla/firefox $HOME/.var/app/org.mozilla.firefox/.mozilla/firefox
+$HOME/.librewolf $HOME/.var/app/io.gitlab.librewolf-community/.librewolf
+$HOME/.floorp $HOME/.var/app/one.ablaze.floorp/.floorp"
+
+# user.js から自分のまとまりを外したものを出す
+strip() {
+    [ -f "$1" ] || return 0
+    awk -v b="$BEGIN" -v e="$END" '$0 == b { skip = 1; next } $0 == e { skip = 0; next } !skip' "$1"
+}
+
+found=0
+changed=0
+# プロファイル = prefs.js のあるフォルダ(名前に空白を含むので、1 行ずつ読む)
+for root in $ROOTS; do
+    [ -d "$root" ] || continue
+    for prefs in "$root"/*/prefs.js; do
+        [ -f "$prefs" ] || continue
+        dir=${prefs%/prefs.js}
+        uj="$dir/user.js"
+        found=$((found + 1))
+        have=0
+        [ -f "$uj" ] && grep -qF "$BEGIN" "$uj" && have=1
+        case "$MODE" in
+            check)
+                if [ "$have" = 1 ]; then echo "  [入っています] $dir"; else echo "  [まだ] $dir"; fi ;;
+            undo)
+                [ "$have" = 1 ] || continue
+                tmp="$uj.ame-new"
+                strip "$uj" > "$tmp" && mv -f "$tmp" "$uj"
+                [ -s "$uj" ] || rm -f "$uj"
+                changed=$((changed + 1))
+                echo "  外しました: $dir" ;;
+            apply)
+                tmp="$uj.ame-new"
+                { strip "$uj"; block; } > "$tmp" || { rm -f "$tmp"; continue; }
+                if [ -f "$uj" ] && cmp -s "$tmp" "$uj"; then rm -f "$tmp"; continue; fi
+                mv -f "$tmp" "$uj"
+                changed=$((changed + 1))
+                echo "  入れました: $dir" ;;
+        esac
+    done
+done
+
+if [ "$found" = 0 ]; then
+    echo "Firefox 系のブラウザのプロファイルが見つかりません(一度ブラウザを起動すると作られます)"
+    exit 0
+fi
+case "$MODE" in
+    apply) [ "$changed" -gt 0 ] && echo "ブラウザを開き直すと効きます" || echo "すべて入っています" ;;
+    undo) [ "$changed" -gt 0 ] && echo "ブラウザを開き直すと元に戻ります" || echo "入っていませんでした" ;;
+esac
+exit 0

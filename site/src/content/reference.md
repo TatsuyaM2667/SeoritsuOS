@@ -118,6 +118,7 @@ ame-shell と一緒に入る、端末からも使える道具です(詳しくは
 | `ame-airpods head` / `battery` / `find` | AirPods の頭の動き・電池 |
 | `ame-handtrack` | カメラの手の認識(JSON の行) |
 | `ame-keyring` / `ame-keyring list` | 鍵束(Secret Service)。セッションが自動で起動します |
+| `ame-browser-tune` / `--check` / `--undo` | Firefox 系のブラウザ(Zen・Firefox・LibreWolf・Floorp。Flatpak 版も)がメモリを溜め込まないよう、user.js に設定を入れる。インストーラと ame-update が入れる |
 | `scripts/zram-setup.sh` | 圧縮したスワップ(zram)を有効にする(`doas` で。`--remove` でやめる) |
 
 ## 環境変数 {#env}

@@ -207,6 +207,11 @@ if [ "$DO_APPS" = 1 ] && [ -f "$SRC/scripts/install-apps.sh" ]; then
     fi
 fi
 
+# Firefox 系のブラウザがメモリを溜め込まないように(新しく作ったプロファイルにも入れる。入っていれば何もしない)
+if [ "$CHECK" = 0 ] && [ -f "$SRC/session/ame-browser-tune" ]; then
+    sh "$SRC/session/ame-browser-tune" | sed "s/^/    ブラウザ: /"
+fi
+
 # FreeBSD: タッチパッド・Bluetooth のドライバ(後から追加した設定。まだなら root で設定する。反映は再起動後)
 # ame-shell を更新した後に行う(1 回目の ame-update でも新しいスクリプトを使えるように)
 if [ "$OS" = FreeBSD ] && [ "$CHECK" = 0 ] && [ "$DO_PKG" = 1 ]; then
