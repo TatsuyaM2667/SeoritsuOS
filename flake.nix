@@ -56,6 +56,10 @@
             mkdir -p $out/share/wayland-sessions
             sed -e "s|@PREFIX@|$out|g" -e 's|^Name=.*|Name=SeoritsuOS|' -e 's|^Name\[ja\]=.*|Name[ja]=SeoritsuOS|' \
               session/ame-shell-river5.desktop > $out/share/wayland-sessions/ame-shell.desktop
+            # ポータルの Secret のバックエンド(Flatpak のアプリの鍵。ame-keyring)
+            mkdir -p $out/share/xdg-desktop-portal/portals $out/share/dbus-1/services
+            cp data/portal/ame.portal $out/share/xdg-desktop-portal/portals/
+            sed "s|@PREFIX@|$out|g" data/portal/org.freedesktop.impl.portal.desktop.ame.service > $out/share/dbus-1/services/org.freedesktop.impl.portal.desktop.ame.service
             runHook postInstall
           '';
           passthru.providedSessions = [ "ame-shell" ];
@@ -91,7 +95,14 @@
             networking.networkmanager.enable = lib.mkDefault true;
             hardware.bluetooth.enable = lib.mkDefault true;
             services.pipewire = { enable = lib.mkDefault true; pulse.enable = lib.mkDefault true; wireplumber.enable = lib.mkDefault true; };
-            xdg.portal = { enable = true; wlr.enable = true; extraPortals = [ pkgs.xdg-desktop-portal-gtk ]; config.river.default = [ "wlr" "gtk" ]; };
+            xdg.portal = {
+              enable = true;
+              wlr.enable = true;
+              # pkg: Flatpak のアプリの鍵(ポータルの Secret)を ame-keyring に
+              extraPortals = [ pkgs.xdg-desktop-portal-gtk pkg ];
+              config.river = { default = [ "wlr" "gtk" ]; "org.freedesktop.impl.portal.Secret" = [ "ame" ]; };
+            };
+            services.dbus.packages = [ pkg ];
             fonts.packages = with pkgs; [ noto-fonts-cjk-sans nerd-fonts.jetbrains-mono nerd-fonts.symbols-only ];
             services.greetd = lib.mkIf cfg.greeter {
               enable = true;

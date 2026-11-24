@@ -338,6 +338,17 @@ if [ "$USER_MODE" = 0 ]; then
     done
 fi
 
+# ポータルの Secret(Flatpak のアプリの鍵。Zed など): ame-keyring をバックエンドとして xdg-desktop-portal に見せる。
+# xdg-desktop-portal はバックエンドの説明(.portal)を決まった 1 か所からしか読まない(全ユーザー用のときだけ置ける)
+if [ "$USER_MODE" = 0 ]; then
+    if [ "$OS" = FreeBSD ]; then PORTALS=/usr/local/share/xdg-desktop-portal/portals; else PORTALS=/usr/share/xdg-desktop-portal/portals; fi
+    install_file "$OUT/share/ame-shell/portal/ame.portal" "$PORTALS/ame.portal" 644
+    tmp=$(mktemp "${TMPDIR:-/tmp}/ame-portal.XXXXXX") || exit 1
+    sed "s|@PREFIX@|$PREFIX|g" "$OUT/share/ame-shell/portal/org.freedesktop.impl.portal.desktop.ame.service" > "$tmp"
+    install_file "$tmp" "$PREFIX/share/dbus-1/services/org.freedesktop.impl.portal.desktop.ame.service" 644
+    rm -f "$tmp"
+fi
+
 # PAM(ロック画面用。Linux の全ユーザー用インストールのみ)
 if [ "$USER_MODE" = 0 ] && [ "$OS" != FreeBSD ]; then
     if [ -n "$PAM_SRC" ] || [ -n "$LOGIN_SRC" ]; then

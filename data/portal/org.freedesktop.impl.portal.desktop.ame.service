@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.desktop.ame
+Exec=@PREFIX@/bin/ame-keyring

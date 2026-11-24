@@ -400,8 +400,69 @@ const Call = struct {
     }
 };
 
+// ---------------------------------------------------------------------------
+// ポータルの Secret(org.freedesktop.impl.portal.Secret)
+//
+// Flatpak のアプリ(Zed など。oo7)は、鍵束に直接ではなく xdg-desktop-portal の Secret を使う:
+// ポータルから「アプリごとの秘密」を 1 つもらい、それでサンドボックスの中の自分の鍵束のファイルを暗号化する。
+// ポータルはその秘密を、ここ(バックエンド)に頼む。秘密は 64 バイトの乱数で、初めて頼まれたときに作り、
+// この鍵束に app_id ごとにしまう(消えると、そのアプリの鍵束が開けなくなるので、ずっと同じものを返す)。
+// 使うには、xdg-desktop-portal に ame.portal(data/portal/ame.portal)を見せ、river-portals.conf で選ぶ
+// ---------------------------------------------------------------------------
+
+const PORTAL_NAME = "org.freedesktop.impl.portal.desktop.ame";
+const PORTAL_PATH = "/org/freedesktop/portal/desktop";
+const I_PORTAL_SECRET = "org.freedesktop.impl.portal.Secret";
+const APP_SECRET_SCHEMA = "org.freedesktop.impl.portal.Secret";
+const APP_SECRET_LEN = 64;
+
+/// app_id の秘密(無ければ作ってしまう)。返すのは鍵束の中のもの(呼んだ側は解放しない)
+fn appSecret(app_id: []const u8) ?[]const u8 {
+    const attrs = [_]Attr{ .{ .key = "xdg:schema", .value = APP_SECRET_SCHEMA }, .{ .key = "app_id", .value = app_id } };
+    var ids = std.ArrayList(u32).init(A);
+    defer ids.deinit();
+    store.search(&attrs, &ids) catch return null;
+    if (ids.items.len > 0) return store.get(ids.items[0]).?.secret;
+    var fresh: [APP_SECRET_LEN]u8 = undefined;
+    std.crypto.random.bytes(&fresh);
+    var lb: [256]u8 = undefined;
+    const label = std.fmt.bufPrint(&lb, "Application key for {s}", .{app_id}) catch "Application key";
+    const id = store.create(label, &attrs, &fresh, "application/octet-stream", false, now()) catch return null;
+    save();
+    return store.get(id).?.secret;
+}
+
+/// RetrieveSecret(o handle, s app_id, h fd, a{sv} options) → (u response, a{sv} results)。秘密を fd に書いて閉じる
+fn portalCall(conn: *c.DBusConnection, msg: *c.DBusMessage) bool {
+    if (c.dbus_message_is_method_call(msg, I_PORTAL_SECRET, "RetrieveSecret") == 0) return false;
+    var it: Iter = undefined;
+    var app_id: []const u8 = "";
+    var fd: c_int = -1;
+    if (c.dbus_message_iter_init(msg, &it) != 0 and argType(&it) == c.DBUS_TYPE_OBJECT_PATH and c.dbus_message_iter_next(&it) != 0 and argType(&it) == c.DBUS_TYPE_STRING) {
+        app_id = getStr(&it);
+        if (c.dbus_message_iter_next(&it) != 0 and argType(&it) == c.DBUS_TYPE_UNIX_FD) c.dbus_message_iter_get_basic(&it, &fd);
+    }
+    defer if (fd >= 0) std.posix.close(fd);
+    // app_id はポータルが確かめた名前(サンドボックスの外から直接呼ばれたときは空のことがある)
+    const ok = fd >= 0 and app_id.len > 0 and blk: {
+        const sec = appSecret(app_id) orelse break :blk false;
+        var off: usize = 0;
+        while (off < sec.len) off += std.posix.write(fd, sec[off..]) catch break :blk false;
+        break :blk true;
+    };
+    var r = Reply.begin(conn, msg) orelse return true;
+    var resp: u32 = if (ok) 0 else 2; // 0 成功・2 そのほかの失敗
+    _ = c.dbus_message_iter_append_basic(&r.it, c.DBUS_TYPE_UINT32, &resp);
+    var arr: Iter = undefined;
+    _ = c.dbus_message_iter_open_container(&r.it, c.DBUS_TYPE_ARRAY, "{sv}", &arr);
+    _ = c.dbus_message_iter_close_container(&r.it, &arr);
+    r.finish();
+    return true;
+}
+
 fn handle(conn: *c.DBusConnection, msg: *c.DBusMessage) bool {
     const path = std.mem.sliceTo(c.dbus_message_get_path(msg) orelse return false, 0);
+    if (std.mem.eql(u8, path, PORTAL_PATH)) return portalCall(conn, msg);
     if (!std.mem.startsWith(u8, path, ROOT)) return false;
     const iface = if (c.dbus_message_get_interface(msg)) |p| std.mem.sliceTo(p, 0) else "";
     var call = Call{
@@ -719,6 +780,9 @@ pub fn main() !u8 {
         std.log.info("{s} はほかのものが持っています。何もせずに終わります", .{NAME});
         return 0;
     }
+    // ポータルの Secret のバックエンドも(Flatpak のアプリ用。持てなくても鍵束は動かす)
+    if (c.dbus_bus_request_name(conn, PORTAL_NAME, c.DBUS_NAME_FLAG_DO_NOT_QUEUE, null) != c.DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER)
+        std.log.info("{s} はほかのものが持っています(ポータルの Secret はそちら)", .{PORTAL_NAME});
     _ = c.dbus_connection_add_filter(conn, filter, null, null);
     while (c.dbus_connection_read_write_dispatch(conn, -1) != 0) {}
     return 0;

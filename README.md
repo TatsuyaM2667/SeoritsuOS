@@ -83,6 +83,7 @@ River 0.3 のセッションでも、シェル部分(ドロワー・壁紙・ラ
     - 顔の検出は MediaPipe の BlazeFace、顔の特徴は OpenCV Zoo の SFace(どちらも Apache-2.0。初めて登録するときに取ってきて SHA-256 を確かめる)。ONNX を読むところも推論も**自作**(別のリポジトリ [ame-kagami](https://github.com/TatsuyaM2667/ame-kagami)(八咫鏡から)、手の認識と同じエンジン)。C++・Python・OpenCV は使わない
     - 登録した特徴は `~/.local/share/ame-shell/face.bin`(本人だけが読める)。画像は残さない。顔認証はパスワードより弱い(赤外線で印刷した写真・双子)ので、要らなければ `face { enabled off }`
 - **鍵束(`ame-keyring`)**: Zed などのアプリが API キー・パスワードをしまう `org.freedesktop.secrets` を自前で持つ(gnome-keyring は要らない)。中身は `~/.local/share/ame-shell/keyring` に XChaCha20-Poly1305 で暗号化。いつも開いている鍵束なので、このユーザーで動くプログラムからは読める
+  - Flatpak のアプリ(Flatpak 版の Zed など)は、鍵束に直接ではなく、ポータルの Secret(`org.freedesktop.portal.Secret`)を使います。ame-keyring はそのバックエンド(`org.freedesktop.impl.portal.Secret`)も持ち、アプリごとの秘密(64 バイトの乱数)を鍵束にしまって渡します。インストーラが `/usr/share/xdg-desktop-portal/portals/ame.portal` を置き、`river-portals.conf` で選びます(全ユーザー用のインストールのとき。NixOS は flake のモジュールが入れます)
 - WASM ウィジェット(保存すると状態を保ったままホットリロード)
 - `ame-ctl` でシェルを操作(キーバインドやスクリプトから)
 
