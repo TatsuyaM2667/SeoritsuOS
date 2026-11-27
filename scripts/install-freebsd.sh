@@ -7,7 +7,7 @@
 #   1. pkg で依存を入れる(River 0.4 以降・SDDM・Xorg(SDDM のログイン画面用)・Wayland・フォント など)
 #   2. GPU のドライバ(drm-kmod の amdgpu / i915kms、NVIDIA は nvidia-drm)を入れて起動時に読み込む
 #   3. dbus / seatd / sddm を有効にし、ユーザーを video グループへ
-#   4. Zig 0.13.0 と Odin(dev-2026-08)をソースからビルド(FreeBSD 向けの配布物が無いため。数十分かかる)
+#   4. Zig 0.13.0 と Odin(dev-2026-11a)をソースからビルド(FreeBSD 向けの配布物が無いため。数十分かかる)
 #   5. ame-shell をビルドして /usr/local にインストール(SDDM に「SeoritsuOS」が出る)
 # FreeBSD の river パッケージは 0.4 以降(ウィンドウマネージャを別に必要とする版)なので、
 # ame-shell がウィンドウマネージャを兼ねて動く。
@@ -268,7 +268,7 @@ else
     [ "$("$ZIG" version)" = "$ZIG_VER" ] || die "Zig のビルドに失敗しました"
 fi
 ODIN_DIR="$TOOLS/odin-$ODIN_TAG"
-if [ -x "$ODIN_DIR/odin" ]; then
+if odin_works "$ODIN_DIR/odin"; then
     info "Odin $ODIN_TAG は導入済み"
 else
     info "Odin $ODIN_TAG をソースからビルドします"
@@ -276,7 +276,7 @@ else
     git_at https://github.com/odin-lang/Odin "$ODIN_TAG" "$ODIN_COMMIT" "$ODIN_DIR" || die "Odin $ODIN_TAG のソースを取ってこられないか、確かめられませんでした"
     cd "$ODIN_DIR"
     env LLVM_CONFIG=/usr/local/bin/llvm-config18 bash build_odin.sh release
-    [ -x "$ODIN_DIR/odin" ] || die "Odin のビルドに失敗しました"
+    odin_works "$ODIN_DIR/odin" || die "Odin のビルドに失敗しました"
 fi
 chmod -R a+rX "$TOOLS"
 

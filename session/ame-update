@@ -37,6 +37,13 @@ done
 
 say() { printf '\n==> %s\n' "$*"; }
 info() { printf '    %s\n' "$*"; }
+# 動く Odin(PATH → インストーラが作ったもの。新しい版から)。LLVM を上げると前の LLVM で作った Odin は起動しなくなるので、動くかで選ぶ
+find_odin() {
+    for o in "$(command -v odin 2>/dev/null)" $(ls -d /usr/local/ame-toolchain/odin-*/odin "$HOME"/.cache/ame-shell/toolchain/odin-*/odin 2>/dev/null | sort -r); do
+        [ -n "$o" ] && [ -x "$o" ] && "$o" version >/dev/null 2>&1 && { echo "$o"; return 0; }
+    done
+    return 1
+}
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 confirm() {
     [ "$ASSUME_YES" = 1 ] || [ ! -t 0 ] && return 0
@@ -169,9 +176,7 @@ if [ "$DO_SELF" = 1 ]; then
         for z in "$(command -v zig 2>/dev/null)" /usr/local/ame-toolchain/zig-0.13.0/bin/zig "$HOME/.cache/ame-shell/toolchain/zig-linux-$(uname -m)-0.13.0/zig"; do
             [ -n "$z" ] && [ -x "$z" ] && [ "$("$z" version 2>/dev/null)" = 0.13.0 ] && { ZIG=$z; break; }
         done
-        for o in "$(command -v odin 2>/dev/null)" /usr/local/ame-toolchain/odin-dev-2026-08/odin "$HOME/.cache/ame-shell/toolchain/odin-dev-2026-08/odin"; do
-            [ -n "$o" ] && [ -x "$o" ] && { ODIN=$o; break; }
-        done
+        ODIN=$(find_odin)
         if [ -z "$ZIG" ] || [ -z "$ODIN" ]; then
             info "ビルド用のツール(Zig 0.13 / Odin)が見つからないため、インストーラを実行します"
             sh "$SRC/install.sh" --yes
@@ -210,7 +215,7 @@ if [ "$DO_APPS" = 1 ] && [ -f "$SRC/scripts/install-apps.sh" ]; then
             else case "$head" in "$(cut -c1-7 "$m")") info "$n: 最新です" ;; *) info "$n: 更新があります($(cat "$m") → $head)" ;; esac; fi
         done
     else
-        odin_bin=$(command -v odin 2>/dev/null || ls "$HOME"/.cache/ame-shell/toolchain/odin-*/odin /usr/local/ame-toolchain/odin-*/odin 2>/dev/null | head -n 1)
+        odin_bin=$(find_odin)
         zig_bin=$(ls "$HOME"/.cache/ame-shell/toolchain/zig-linux-*-0.13.0/zig /usr/local/ame-toolchain/zig-0.13.0/bin/zig 2>/dev/null | head -n 1)
         ODIN="${odin_bin:-odin}" ZIG="${zig_bin:-zig}" sh "$SRC/scripts/install-apps.sh" --latest || info "(作れなかったアプリがあります)"
     fi

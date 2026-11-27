@@ -23,6 +23,12 @@ CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/ame-shell/toolchain"
 SRC="${XDG_CACHE_HOME:-$HOME/.cache}/ame-shell/apps"
 MARK="$PREFIX/share/ame-shell/apps"   # この script が入れた印(名前のファイル)
 ODIN="${ODIN:-odin}"
+# 渡された(PATH の)Odin が動かなければ(LLVM を上げた後など)、インストーラが作った動くものを使う
+if ! odin_works "$(command -v "$ODIN" 2>/dev/null)"; then
+    for o in $(ls -d "$CACHE"/odin-*/odin /usr/local/ame-toolchain/odin-*/odin 2>/dev/null | sort -r); do
+        odin_works "$o" && { ODIN=$o; break; }
+    done
+fi
 ZIG="${ZIG:-zig}"
 ARCH=$(uname -m)
 OS=$(uname -s)

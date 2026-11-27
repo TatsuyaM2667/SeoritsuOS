@@ -11,7 +11,7 @@ ZIG_VER=0.13.0          # ame-shell と道具(Zig 0.13)
 ZIG_RIVER_VER=0.16.0    # River 0.5 のビルド
 ZIG17_VER=0.17.0        # seoritsu の tree-sitter・ghostty のビルド
 GHOSTTY_VER=1.4.0
-ODIN_TAG=dev-2026-08
+ODIN_TAG=dev-2026-11a
 
 # ---- Zig の配布物(https://ziglang.org/download/<版>/…)----
 # zig_sha256 <版> <名前>   名前: x86_64-linux・aarch64-linux・x86_64-freebsd・aarch64-freebsd・src
@@ -35,13 +35,13 @@ zig_sha256() {
 GHOSTTY_SHA256=cb188ac6c3a8278d5fd7bfef15d8c017104c87f638b5560eb38024a71ae0f005 # ghostty-1.4.0.tar.gz
 
 # ---- git(タグ・ブランチと、その時のコミット)----
-ODIN_COMMIT=8412dc37aa91def0c2fa90f89eade29056b4e608   # odin-lang/Odin の dev-2026-08
+ODIN_COMMIT=9a6991685ddf663956d9836602eb421e141fc443   # odin-lang/Odin の dev-2026-11a(LLVM 23 で作れる。dev-2026-08 は作れない)
 RIVER_COMMIT=cc4a291b2b9375fe3d5fe5a64b6f510b463f888b  # codeberg.org/river/river の v0.5.0
 ZSH_AUTOSUGGEST_COMMIT=85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5 # zsh-users/zsh-autosuggestions
 # ame のアプリ(scripts/install-apps.sh。--latest なら最新を取ってきて、この値は見ない)
-APP_COMMIT_ame_filemanager=47f207d1ca038a7648926b0fe9aa00af426b1cf8
-APP_COMMIT_kuraokami=3adae222335df7c6368aec9d7f98a85943fa7178
-APP_COMMIT_seoritsu=1e35415fe15e92c4c44fbae026574d88b0557d6c
+APP_COMMIT_ame_filemanager=f2d023d53ee68656933d3ae60759b729c60867d5   # 枝 seoritsuos-pin(Odin dev-2026-11 対応)
+APP_COMMIT_kuraokami=641ddce19fdfcc3f60203cba35ab07d3846ecc44
+APP_COMMIT_seoritsu=c8d99900decd7aa389ff6f5b4a6597e882baddf2
 
 # ---- 確かめる道具 ----
 sha256_of() { # sha256_of <ファイル>
@@ -88,3 +88,6 @@ git_at() {
         return 1
     fi
 }
+
+# odin_works <odin>: その Odin が動くか(LLVM を上げると、前の LLVM で作った Odin は起動しなくなる)
+odin_works() { [ -n "$1" ] && [ -x "$1" ] && "$1" version >/dev/null 2>&1; }

@@ -224,19 +224,26 @@ else
 fi
 info "zig: $ZIG($("$ZIG" version))"
 ODIN=""
-if command -v odin >/dev/null 2>&1; then
+# PATH の odin は、動くときだけ使う(LLVM を上げると、前の LLVM で作った Odin は起動しなくなる)
+if odin_works "$(command -v odin 2>/dev/null)"; then
     ODIN=$(command -v odin)
 else
     ODIN_DIR="$CACHE/odin-$ODIN_TAG"
     ODIN="$ODIN_DIR/odin"
-    if [ ! -x "$ODIN" ]; then
-        info "Odin $ODIN_TAG をソースからビルドします(clang と llvm-config を使用)"
+    if ! odin_works "$ODIN"; then
+        info "Odin $ODIN_TAG をソースからビルドします(clang と llvm-config を使用。今の LLVM: $(llvm-config --version 2>/dev/null || echo 不明))"
         rm -rf "${ODIN_DIR:?}"
         git_at https://github.com/odin-lang/Odin "$ODIN_TAG" "$ODIN_COMMIT" "$ODIN_DIR" || die "Odin $ODIN_TAG のソースを取ってこられないか、確かめられませんでした"
         (cd "$ODIN_DIR" && bash build_odin.sh release)
     fi
+    # 前の版の Odin(動かなくなったもの)は消す
+    for old in "$CACHE"/odin-*; do
+        [ -d "$old" ] && [ "$old" != "$ODIN_DIR" ] && ! odin_works "$old/odin" && rm -rf "${old:?}" && info "動かなくなった古い Odin を消しました: $old"
+    done
 fi
-[ -x "$ODIN" ] || die "Odin を用意できませんでした"
+odin_works "$ODIN" || die "Odin を用意できませんでした(LLVM の版が Odin $ODIN_TAG に合わない可能性があります: llvm-config --version)"
+# いつも今の Odin を指す決まった名前(PATH にはこちらを入れておけば、版が上がっても直さずに済む)
+[ "$ODIN" = "$CACHE/odin-$ODIN_TAG/odin" ] && ln -sfn "odin-$ODIN_TAG" "$CACHE/odin-current"
 info "odin: $ODIN"
 TOOLPATH="$(dirname "$ZIG"):$(dirname "$ODIN"):$PATH"
 

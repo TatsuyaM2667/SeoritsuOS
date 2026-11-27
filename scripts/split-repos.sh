@@ -209,7 +209,7 @@ gen_readme() { # $1 名前 $2 説明 $3 外部コマンド $4 ほかに要るも
 	echo
 	echo '```sh'
 	case "$4" in
-	odin) echo "sh build.sh   # ./$1(Odin dev-2026-08 以降。libpulse などは実行時に読むので、ヘッダも -dev パッケージも要らない)" ;;
+	odin) echo "sh build.sh   # ./$1(Odin dev-2026-11a 以降。libpulse などは実行時に読むので、ヘッダも -dev パッケージも要らない)" ;;
 	wayland) echo "zig build -Doptimize=ReleaseSafe   # zig-out/bin(Zig 0.13、libc・wayland-client・wayland-scanner)" ;;
 	wayland-xkb) echo "zig build -Doptimize=ReleaseSafe   # zig-out/bin/$1(Zig 0.13、libc・wayland-client・xkbcommon・wayland-scanner)" ;;
 	dbus) echo "zig build -Doptimize=ReleaseSafe   # zig-out/bin/$1(Zig 0.13、libc と libdbus)" ;;
@@ -259,7 +259,7 @@ echo "$COMPONENTS" | while IFS='|' read -r name mods needs extra desc; do
 			for m in $mods; do cp "$ROOT/anim/$m.odin" "$dir/anim/$m.odin"; done
 			sed 's|import anim "../../anim"|import anim "anim"|' "$dir/main.odin" > "$dir/main.odin.tmp" && mv "$dir/main.odin.tmp" "$dir/main.odin"
 		fi
-		printf '#!/bin/sh\n# %s をビルドする(POSIX sh。Odin dev-2026-08 以降)\nset -eu\ncd "$(dirname "$0")"\nexec odin build . -out:%s -o:speed "$@"\n' "$name" "$name" > "$dir/build.sh"
+		printf '#!/bin/sh\n# %s をビルドする(POSIX sh。Odin dev-2026-11a 以降)\nset -eu\ncd "$(dirname "$0")"\nexec odin build . -out:%s -o:speed "$@"\n' "$name" "$name" > "$dir/build.sh"
 		chmod +x "$dir/build.sh"
 		gen_readme "$name" "$desc" "$needs" odin "$ROOT/odin/$name/main.odin" > "$dir/README.md"
 		printf '%s\n' "$name" > "$dir/.gitignore"

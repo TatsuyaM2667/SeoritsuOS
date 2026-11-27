@@ -49,8 +49,8 @@ for z in "$(command -v zig 2>/dev/null)" /usr/local/ame-toolchain/zig-0.13.0/bin
     [ -n "$z" ] && [ -x "$z" ] && [ "$("$z" version 2>/dev/null)" = 0.13.0 ] && { ZIG=$z; break; }
 done
 [ -n "$ZIG" ] || { echo "Zig 0.13 が見つかりません(sh install.sh で用意されます)" >&2; exit 1; }
-for o in "$(command -v odin 2>/dev/null)" /usr/local/ame-toolchain/odin-dev-2026-08/odin "$HOME/.cache/ame-shell/toolchain/odin-dev-2026-08/odin"; do
-    [ -n "$o" ] && [ -x "$o" ] && { PATH="$(dirname "$o"):$PATH"; export PATH; break; }
+for o in "$(command -v odin 2>/dev/null)" $(ls -d /usr/local/ame-toolchain/odin-*/odin "$HOME"/.cache/ame-shell/toolchain/odin-*/odin 2>/dev/null | sort -r); do
+    [ -n "$o" ] && [ -x "$o" ] && "$o" version >/dev/null 2>&1 && { PATH="$(dirname "$o"):$PATH"; export PATH; break; }
 done
 
 echo "==> ビルド(zig build site)"

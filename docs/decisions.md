@@ -3,7 +3,7 @@
 各項目: 決定 / 理由 / 却下した案
 
 ## 環境(実機確認: 2026-10-26)
-Chimera Linux x86_64 / musl / dinit / AMD Ryzen 7 7735HS (16 スレッド) / Radeon 680M (radeonsi, Mesa 26.2.4) / RAM 13.3GB / 内蔵パネル + バッテリー(BAT0, ADP0)/ River 0.3.5(手動導入、apk 管理外)/ Zig 0.13.0(`/usr/local/zig-0.13.0`)/ Odin dev-2026-08(`~/.local/bin/odin`、ソースビルド)。
+Chimera Linux x86_64 / musl / dinit / AMD Ryzen 7 7735HS (16 スレッド) / Radeon 680M (radeonsi, Mesa 26.2.4) / RAM 13.3GB / 内蔵パネル + バッテリー(BAT0, ADP0)/ River 0.3.5(手動導入、apk 管理外)/ Zig 0.13.0(`/usr/local/zig-0.13.0`)/ Odin dev-2026-11a(`~/.local/bin/odin`、ソースビルド)。
 
 ## レンダラ: EGL + GLES3
 - 理由: Mesa radeonsi の GLES3.2 が使え、2D UI には十分。Vulkan はコード量が数倍になり、利点(マルチスレッド記録など)がこの規模の UI では効かない。
@@ -93,7 +93,7 @@ Chimera Linux x86_64 / musl / dinit / AMD Ryzen 7 7735HS (16 スレッド) / Rad
 
 ## ame のアプリ(ファイルマネージャ・端末・エディタ)をエコシステムに(2026-11)
 - 決定: ame-filemanager(ファイルマネージャ)・kuraokami(端末)・seoritsu(コードエディタ)は別のリポジトリのまま、ame-shell の `install.sh` が `scripts/install-apps.sh` で取ってきてビルドし、本人の `~/.local` に入れる。Super+E・Super+Return(`ame-terminal`)・文字のファイルの既定のアプリが使う。
-- 理由: どれも Odin で書いた半透明のアプリで、ame-shell と同じツールチェイン(Odin dev-2026-08・Zig)で作れる。Thunar(GTK3)と、ビルドに GTK4・libadwaita・glslang などを要する ghostty を既定で入れずに済む。
+- 理由: どれも Odin で書いた半透明のアプリで、ame-shell と同じツールチェイン(Odin dev-2026-11a・Zig)で作れる。Thunar(GTK3)と、ビルドに GTK4・libadwaita・glslang などを要する ghostty を既定で入れずに済む。
 - `~/.local` に入れる: アプリ自身のインストーラと同じ場所で、root が要らない。ランチャーの `.desktop` の Exec はフルパスにする(PATH に ~/.local/bin が無いことがある)。
 - 自分で入れたものは上書きしない: この script が入れた印(`~/.local/share/ame-shell/apps/<名前>`)が無いのに同じ名前のコマンドがあれば、開発中の版とみなして触らない。
 - 各アプリの install.sh は使わない: GNU の `install -D` など、BSD の install(1)(Chimera・FreeBSD)で動かない書き方があるため、入れる部分は POSIX sh で ame-shell 側に書いた。
@@ -106,3 +106,8 @@ Chimera Linux x86_64 / musl / dinit / AMD Ryzen 7 7735HS (16 スレッド) / Rad
 - ame-auth の総当たり対策: 5 回までは待たずに試せ、その後は 30 秒から倍々(最大 15 分)照合しない。数えるのは root だけが書ける /var/db/ame-auth。却下: 本人の ~ に数える(本人が消せる)、PAM の faillock に任せる(FreeBSD の OpenPAM には無い)。
 - クリップボードの履歴は ame-paste --watch の 1 行を読むだけ(本体は Wayland の別の口を増やさない)。メモリの中だけ・パスワード管理の「秘密」は覚えない。
 - 録画の範囲はスクショの範囲選択を使い回し、ame-rec には -g で渡す(ame-rec は画面の座標だけを知っていればよい)。
+
+## Odin を dev-2026-11a に(2026-11-27)
+- 起きたこと: Chimera の更新で LLVM が 22 → 23 になり、LLVM 22 で作った Odin dev-2026-08 が起動しなくなった(libLLVM.so.22.1 が無い)。dev-2026-08 は LLVM 23 のヘッダ(LLVMBr が無い)でソースからも作れない。
+- 決めたこと: Odin を dev-2026-11a に上げる(LLVM 23 で作れる・動く)。dev-2026-11 から core:image の Image.pixels が bytes.Buffer ではなく [dynamic]u8 になったので、ame-filemanager と kuraokami に、どちらの Odin でもビルドできる image_bytes(when で型を見て分ける)を入れた。
+- 再発の防止: インストーラ・ame-update・install-apps・site/deploy.sh は、Odin を「ファイルがあるか」ではなく「動くか」(odin version)で選ぶ。動くものが無ければ決まった版をソースから作り直し、動かなくなった古いものは消す。PATH 用に、いつも今の Odin を指す ~/.cache/ame-shell/toolchain/odin-current を作る。
