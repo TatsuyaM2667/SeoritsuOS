@@ -307,9 +307,7 @@ echo "$COMPONENTS" | while IFS='|' read -r name mods needs extra desc; do
 		echo "$name: 変更なし"
 		continue
 	fi
-	git -C "$dir" commit -q -m "ame-shell $REV と同期
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+	git -C "$dir" commit -q -m "ame-shell $REV と同期"
 	if [ "$DRY" = 1 ]; then
 		echo "$name: $dir に作りました(--dry-run なので push しません)"
 		continue

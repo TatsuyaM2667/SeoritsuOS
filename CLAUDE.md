@@ -4,6 +4,7 @@
 - 使ってよい: Zig(本体・ビルド)、Odin(anim/: スプリング・ファジー・主色抽出)、C(既存ライブラリのバインドと third_party の wasm3 / stb_image)、WebAssembly(widgets/)。
 - 禁止: Python, C++, Qt, GTK, Electron, Node.js, QML(補助スクリプトにも使わない)。シェルスクリプトは POSIX sh のみ(bash/GNU 拡張禁止: `sed -i`, `readlink -f`, `date -d`, `find -printf`)。Chimera は chimerautils(BSD 系)なので `grep` はバイナリ内を検索しない・`tr` は `LC_ALL=C` が必要。
 - ビルドは `zig build` のみ。OS 依存は `src/platform/` に閉じ込める。
+- コミットのメッセージ・PR に AI の署名(`Co-Authored-By: Claude …` など)を付けない(GitHub のコントリビューターに出さないため。`scripts/git-hooks/commit-msg` が消す。`git config core.hooksPath scripts/git-hooks`)。分けたリポジトリ(scripts/split-repos.sh)も同じ。
 - sudo/doas・/usr・/etc への書き込みはしない(導入は `session/install-session.sh` を人が root で実行)。`~/.config` の既存設定は読むだけ。実セッションの River(pid は `pgrep -x river` で最初のもの)や waybar/swaync に触れない。
 
 ## 環境

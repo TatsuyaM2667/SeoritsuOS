@@ -152,7 +152,16 @@ if [ "$DO_SELF" = 1 ]; then
         if [ -n "$(git -C "$SRC" status --porcelain --untracked-files=no)" ]; then
             info "ソースに手元の変更があるため git pull はしません(手元の変更を守るため)。今のソースでビルドします"
         elif [ "$local_rev" != "$remote_rev" ]; then
-            git -C "$SRC" pull --ff-only -q || die "git pull に失敗しました(手元のコミットと分岐しています)"
+            if ! git -C "$SRC" pull --ff-only -q; then
+                # リモートの履歴が書き直された(コミットのメッセージだけ直したなど)とき: 手元のコミットの中身(差分)が
+                # すべてリモートにもあれば、リモートに合わせる。手元にしか無い変更が 1 つでもあれば止める
+                if [ -z "$(git -C "$SRC" cherry '@{u}' HEAD 2>/dev/null | grep '^+')" ]; then
+                    info "リモートの履歴が書き直されていたので、合わせます(手元にしか無い変更はありません)"
+                    git -C "$SRC" reset -q --hard '@{u}' || die "リモートに合わせられませんでした"
+                else
+                    die "git pull に失敗しました(手元にしか無いコミットがあります: git -C $SRC cherry -v '@{u}')"
+                fi
+            fi
         fi
         # ツールチェイン: インストール時に用意したもの(FreeBSD は /usr/local/ame-toolchain、Linux は PATH か ~/.cache)
         ZIG=""

@@ -1,0 +1,8 @@
+#!/bin/sh
+# commit-msg: コミットのメッセージから AI(Claude など)の共著者の行を消す(GitHub のコントリビューターに出さない)。POSIX sh。
+# 使う: git config core.hooksPath scripts/git-hooks
+f=$1
+tmp="$f.ame-tmp"
+LC_ALL=C grep -viE '^[[:space:]]*co-authored-by:.*(claude|anthropic)' "$f" > "$tmp"
+mv -f "$tmp" "$f"
+exit 0
