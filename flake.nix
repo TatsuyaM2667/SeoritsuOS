@@ -12,8 +12,8 @@
     zig-x86_64-linux = { url = "https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz"; flake = false; };
     zig-aarch64-linux = { url = "https://ziglang.org/download/0.13.0/zig-linux-aarch64-0.13.0.tar.xz"; flake = false; };
     # build.zig.zon と同じコミット(変えるときは両方)
-    ame-senju = { url = "github:TatsuyaM2667/ame-senju/cc31453eee6c24b7a99dec670f06334b4f47d111"; flake = false; };
-    ame-kagami = { url = "github:TatsuyaM2667/ame-kagami/bcef91268096a48b0c64707248db08d745679c19"; flake = false; };
+    ame-senju = { url = "github:TatsuyaM2667/ame-senju/6b3ddcb857687a3e8833c1fa11fe1268b762f761"; flake = false; };
+    ame-kagami = { url = "github:TatsuyaM2667/ame-kagami/4e605f3700456bc098ecea2e473f0ecc72644518"; flake = false; };
   };
 
   outputs = { self, nixpkgs, ame-senju, ame-kagami, ... }@inputs:
@@ -43,7 +43,7 @@
             mkdir -p $ZIG_GLOBAL_CACHE_DIR/p
             # build.zig.zon のハッシュの名前で置くと、zig は取りに行かずにこれを使う
             cp -r ${ame-senju} $ZIG_GLOBAL_CACHE_DIR/p/12205c717f391532a8cb22885bac03817aa98afa49efa4acbe69e7cd9a1eb62213a4
-            cp -r ${ame-kagami} $ZIG_GLOBAL_CACHE_DIR/p/1220ca6670f75f1778fc331a53d57f5455e10530556e49b0a576fda8b61f61d3619b
+            cp -r ${ame-kagami} $ZIG_GLOBAL_CACHE_DIR/p/12205a87c0adffa37a9933b2dbb62fb3e13c8218246c77c1a034c94ed10a97c2c1b9
             chmod -R u+w $ZIG_GLOBAL_CACHE_DIR
             ${inputs."zig-${system}"}/zig build -Doptimize=ReleaseFast
             runHook postBuild
